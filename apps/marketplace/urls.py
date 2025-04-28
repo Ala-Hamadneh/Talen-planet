@@ -16,5 +16,5 @@ urlpatterns = [
     path('gigs/create/', GigCreateView.as_view(), name='gig-create'),
     path('gigs/<int:pk>/', GigDetailView.as_view(), name='gig-detail'),
     path('my-gigs/', MyGigsListView.as_view(), name='my-gigs'),
-     path('my-gigs/service/<int:service_id>/', MyFilteredGigsListView.as_view(), name='my-gigs-filtered'),
+    path('my-gigs/service/<int:service_id>/', MyFilteredGigsListView.as_view(), name='my-gigs-filtered'),
 ]
