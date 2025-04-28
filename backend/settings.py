@@ -44,7 +44,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
 
     # My Apps
-    'apps.accounts.apps.AccountsConfig'
+    'apps.accounts.apps.AccountsConfig',
+    'apps.marketplace.apps.MarketplaceConfig',
 ]
 
 MIDDLEWARE = [
@@ -84,10 +85,10 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'freelance',
-        'USER': 'postgres',
-        'PASSWORD': 'Alaa123456',
-        'HOST': 'localhost',
+        'NAME': 'freelance_tsyd',
+        'USER': 'freelance_tsyd_user',
+        'PASSWORD': 'JRurtKkF1kFywKRzYhjA2SB6iXJnFbzt',
+        'HOST': 'dpg-d07qmpadbo4c73bqdb20-a.oregon-postgres.render.com',
         'PORT': '5432'
     }
 }
