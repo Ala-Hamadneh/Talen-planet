@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     # Django Rest Framework
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
 
     # My Apps
     'apps.accounts.apps.AccountsConfig'
@@ -146,7 +147,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': True,  # Issues new refresh token on refresh
     'BLACKLIST_AFTER_ROTATION': True,  # Invalidates old refresh tokens
