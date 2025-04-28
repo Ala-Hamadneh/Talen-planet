@@ -1,0 +1,27 @@
+from rest_framework import serializers
+from apps.accounts.serializers import UserSerializer
+from .models import Categories, Services, Gigs
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Categories
+        fields = ['id', 'name']
+
+class ServiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Services
+        fields = ['id', 'name', 'category']
+
+class GigSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='seller.username', read_only=True)
+    email = serializers.CharField(source='seller.email', read_only=True)
+    class Meta:
+        model = Gigs
+        fields = ['id', 'title', 'description', 'price', 
+                 'delivery_time', 'created_at', 'service', 'username','email']
+
+class GigCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Gigs
+        fields = ['title', 'description', 'price', 
+                 'delivery_time', 'service']

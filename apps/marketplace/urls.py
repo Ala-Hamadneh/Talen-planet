@@ -1,0 +1,16 @@
+from django.urls import path
+from .views import (
+    CategoryListView,
+    ServiceListView,
+    GigListView,
+    GigCreateView,
+    GigDetailView
+)
+
+urlpatterns = [
+    path('categories/', CategoryListView.as_view(), name='category-list'),
+    path('categories/<int:category_id>/services/', ServiceListView.as_view(), name='service-list'),
+    path('services/<int:service_id>/gigs/', GigListView.as_view(), name='gig-list'),
+    path('gigs/create/', GigCreateView.as_view(), name='gig-create'),
+    path('gigs/<int:pk>/', GigDetailView.as_view(), name='gig-detail'),
+]
