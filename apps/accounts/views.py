@@ -39,7 +39,7 @@ class LoginView(TokenObtainPairView):
         return response
 
 class UserListView(generics.ListAPIView):
-    queryset = User.objects.all()
+    queryset = User.objects.all().order_by('id')
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAdminUser]
 
