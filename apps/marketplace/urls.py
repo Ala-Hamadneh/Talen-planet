@@ -4,7 +4,9 @@ from .views import (
     ServiceListView,
     GigListView,
     GigCreateView,
-    GigDetailView
+    GigDetailView,
+    MyGigsListView,
+    MyFilteredGigsListView,
 )
 
 urlpatterns = [
@@ -13,4 +15,6 @@ urlpatterns = [
     path('services/<int:service_id>/gigs/', GigListView.as_view(), name='gig-list'),
     path('gigs/create/', GigCreateView.as_view(), name='gig-create'),
     path('gigs/<int:pk>/', GigDetailView.as_view(), name='gig-detail'),
+    path('my-gigs/', MyGigsListView.as_view(), name='my-gigs'),
+     path('my-gigs/service/<int:service_id>/', MyFilteredGigsListView.as_view(), name='my-gigs-filtered'),
 ]

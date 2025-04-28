@@ -58,3 +58,29 @@ class GigDetailView(generics.RetrieveUpdateDestroyAPIView):
             instance.save()
         else:
             raise PermissionDenied("You don't have permission to delete this gig.")
+        
+class MyGigsListView(generics.ListAPIView):
+    serializer_class = GigSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        # Return only the authenticated seller's active gigs
+        return Gigs.objects.filter(
+            seller=self.request.user,
+            is_active=True
+        ).select_related('service', 'seller')
+    
+
+class MyFilteredGigsListView(generics.ListAPIView):
+    serializer_class = GigSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        """Returns seller's gigs filtered by service ID"""
+        service_id = self.kwargs.get('service_id')  # From URL
+        
+        return Gigs.objects.filter(
+            seller=self.request.user,
+            service_id=service_id,
+            is_active=True
+        ).select_related('service', 'seller')
