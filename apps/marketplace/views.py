@@ -1,5 +1,6 @@
 from rest_framework import generics, permissions 
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.permissions import IsAdminUser
 from .models import Categories, Services, Gigs
 from .serializers import (
     CategorySerializer, 
@@ -84,3 +85,19 @@ class MyFilteredGigsListView(generics.ListAPIView):
             service_id=service_id,
             is_active=True
         ).select_related('service', 'seller')
+
+
+class AdminGigListView(generics.ListAPIView):
+    """
+    Admin-only view to list ALL gigs (including inactive ones)
+    """
+    serializer_class = GigSerializer
+    permission_classes = [IsAdminUser]  # Only accessible by admin users
+    queryset = Gigs.objects.all().select_related('seller', 'service').order_by('id')
+
+    def get_serializer_context(self):
+        """Adds extra context for the serializer"""
+        return {
+            'show_admin_fields': True,  # Flag to show sensitive fields to admin
+            'request': self.request
+        }
