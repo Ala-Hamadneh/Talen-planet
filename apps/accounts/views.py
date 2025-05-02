@@ -51,8 +51,13 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         user = super().get_object()
         if not (self.request.user.is_staff or self.request.user == user):
-            raise PermissionDenied(
+            if self.request.method=='GET':
+                raise PermissionDenied(
                 {'detail': 'You are not allowed to view other users details'},
+            )
+            elif self.request.method == 'PUT':
+                raise PermissionDenied(
+                {'detail': 'You are not allowed to edit other users details'},
             )
         return user
 
