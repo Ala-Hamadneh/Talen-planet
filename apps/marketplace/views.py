@@ -38,7 +38,10 @@ class GigCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     
     def perform_create(self, serializer):
-        serializer.save(seller=self.request.user)
+        if self.request.user.id == 3:
+             serializer.save(seller=self.request.user)
+        else:
+            raise PermissionDenied("Only Seller can post a gig.")
 
 class GigDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Gigs.objects.all()
