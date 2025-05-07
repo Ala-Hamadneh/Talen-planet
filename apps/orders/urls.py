@@ -5,7 +5,8 @@ from .views import (
     OrderListView,
     OrderDetailView,
     BuyerOrderListView,
-    SellerOrderListView
+    SellerOrderListView,
+    MarkOrderCompletedView,
 )
 
 urlpatterns = [
@@ -15,4 +16,5 @@ urlpatterns = [
     path('<int:pk>/', OrderDetailView.as_view(), name='order-detail'),
     path('my-orders/', BuyerOrderListView.as_view(), name='buyer-order-list'),
     path('seller-orders/', SellerOrderListView.as_view(), name='seller-order-list'),
+    path('<int:pk>/complete/', MarkOrderCompletedView.as_view(), name='order-complete'),
 ]

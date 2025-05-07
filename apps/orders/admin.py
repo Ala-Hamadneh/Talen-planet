@@ -7,7 +7,7 @@ from .models import Order, OrderStatus
 class OrderStatusAdmin(admin.ModelAdmin):
     list_display = ('name', 'description', 'active_order_count')
     search_fields = ('name', 'description')
-    readonly_fields = ('name',)  # Prevent editing of status names after creation
+    readonly_fields = ('name',)  
     
     def active_order_count(self, obj):
         return obj.orders.filter(is_active=True).count()
@@ -24,11 +24,11 @@ class OrderAdmin(admin.ModelAdmin):
         'status',
         'formatted_price',
         'created_short',
-        'active_status',  # Custom display for is_active
-        'is_active'  # Keep this if you want it to be editable
+        'active_status',  
+        'is_active'  
     )
-    list_editable = ('is_active',)  # Make is_active editable directly from list view
-    list_filter = ('is_active', 'status')  # Add is_active to filters
+    list_editable = ('is_active',)  
+    list_filter = ('is_active', 'status')  
     
     def buyer_username(self, obj):
         return obj.buyer.username
@@ -43,7 +43,7 @@ class OrderAdmin(admin.ModelAdmin):
     gig_title.short_description = 'Gig'
     
     def formatted_price(self, obj):
-        return f"${obj.gig.price:,.2f}"
+        return f"{obj.gig.price:,.2f} ILS"
     formatted_price.short_description = 'Price'
     
     def short_requirements(self, obj):
