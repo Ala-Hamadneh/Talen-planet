@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from datetime import timedelta
 from pathlib import Path
+from dotenv import load_dotenv
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,7 +28,7 @@ SECRET_KEY = 'django-insecure-z00k6@txn1fepi+ai2y_+kmdyfdz^(mn6@mx$smi9sf!2aa!h1
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -47,6 +49,7 @@ INSTALLED_APPS = [
     'apps.accounts.apps.AccountsConfig',
     'apps.marketplace.apps.MarketplaceConfig',
     'apps.orders.apps.OrdersConfig',
+    'apps.payment.apps.PaymentConfig',
 ]
 
 MIDDLEWARE = [
@@ -156,6 +159,11 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,  # Issues new refresh token on refresh
     'BLACKLIST_AFTER_ROTATION': True,  # Invalidates old refresh tokens
 }
+
+load_dotenv()
+LAHZA_PUBLIC_KEY =os.getenv('LAHZA_PUBLIC_KEY') 
+LAHZA_SECRET_KEY = os.getenv('LAHZA_SECRET_KEY')
+LAHZA_API_URL = os.getenv('LAHZA_API_URL')
 
 # Email configuration (example for Gmail)
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
