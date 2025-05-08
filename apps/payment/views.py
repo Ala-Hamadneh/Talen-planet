@@ -6,6 +6,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from apps.orders.models import Order, OrderStatus
 from .models import LahzaTransaction, WithdrawalRequest
+from rest_framework import generics, permissions
+from .serializers import PayoutApprovalSerializer
 
 
 
@@ -146,3 +148,17 @@ class RequestWithdrawalView(APIView):
         WithdrawalRequest.objects.create(seller=seller, amount=amount)
         return Response({"message": "Withdrawal request submitted."})
 
+
+class AdminPayoutApprovalListView(generics.ListAPIView):
+    serializer_class = PayoutApprovalSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def get_queryset(self):
+        completed_status = OrderStatus.objects.get(name="Completed")
+        return Order.objects.filter(status=completed_status, payout_sent=False)
+
+
+class AdminPayoutApproveView(generics.UpdateAPIView):
+    serializer_class = PayoutApprovalSerializer
+    permission_classes = [permissions.IsAdminUser]
+    queryset = Order.objects.all()

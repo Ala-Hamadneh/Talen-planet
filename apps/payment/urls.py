@@ -5,7 +5,9 @@ from .views import (
     InitPaymentView,
     LahzaWebhookView,
     SellerEarningsView,
-    RequestWithdrawalView
+    RequestWithdrawalView,
+    AdminPayoutApprovalListView,
+    AdminPayoutApproveView,
     )
 
 urlpatterns = [
@@ -13,4 +15,6 @@ urlpatterns = [
     path('webhook/', LahzaWebhookView.as_view()),
     path('my-earnings/', SellerEarningsView.as_view(), name='seller-earnings'),
     path('withdraw/', RequestWithdrawalView.as_view(), name='request-withdrawal'),
+    path('admin/payouts/', AdminPayoutApprovalListView.as_view(), name='admin-payouts-list'),
+    path('admin/payouts/<int:pk>/approve/', AdminPayoutApproveView.as_view(), name='admin-payout-approve'),
 ]
