@@ -8,13 +8,15 @@ from apps.orders.models import Order, OrderStatus
 from .models import LahzaTransaction, WithdrawalRequest
 from rest_framework import generics, permissions
 from .serializers import PayoutApprovalSerializer
+from apps.communications.notification.utils import notify_user
+from django.conf import settings
 
 
 
 from decimal import Decimal
 from django.db.models import Sum
 # Create your views here.
-
+User = settings.AUTH_USER_MODEL
 
 class InitPaymentView(APIView):
     permission_classes = [IsAuthenticated]
@@ -146,6 +148,15 @@ class RequestWithdrawalView(APIView):
             return Response({"error": "Insufficient balance."}, status=400)
 
         WithdrawalRequest.objects.create(seller=seller, amount=amount)
+
+        admins = User.objects.filter(is_staff=True, is_active=True)
+        for admin in admins:
+            notify_user(
+                user=admin,
+                title="New Withdrawal Request",
+                body=f"{seller.username} has requested a withdrawal of {amount} ILS.",
+                notification_type="system"
+            )
         return Response({"message": "Withdrawal request submitted."})
 
 
