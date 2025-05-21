@@ -2,6 +2,7 @@ from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied, NotFound
 from rest_framework.views import APIView
+from apps.communications.notification.utils import notify_user
 
 from decimal import Decimal
 
@@ -66,7 +67,13 @@ class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
                 status_id = data['status'].id
                 allowed_status = 2
                 if status_id != allowed_status:
-                    raise PermissionDenied("Seller can only mark status as Delivered or Cancelled.")    
+                    raise PermissionDenied("Seller can only mark status as Delivered or Cancelled.")   
+                notify_user(
+                    user=order.buyer,
+                    title="Order Delivered",
+                    body=f"Your order #{order.id} has been marked as delivered by the seller.",
+                    notification_type="order"
+                ) 
             serializer.save()
 
         elif user == order.buyer:
@@ -146,6 +153,13 @@ class MarkOrderCompletedView(APIView):
         order.seller_payout = round(seller_payout, 2)
         order.payout_sent = False
         order.save()
+
+        notify_user(
+                    user=order.gig.seller,
+                    title="Order Completed",
+                    body=f"Your order #{order.id} has been marked as completed by the buyer.",
+                    notification_type="order"
+                )
 
         return Response({
             "detail": "Order marked as completed.",
