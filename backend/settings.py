@@ -50,6 +50,12 @@ INSTALLED_APPS = [
     'apps.marketplace.apps.MarketplaceConfig',
     'apps.orders.apps.OrdersConfig',
     'apps.payment.apps.PaymentConfig',
+    'apps.communications.messages.apps.MessagesAppConfig',
+    'apps.communications.notification.apps.NotificationConfig',
+
+
+    # Channels for Web Sockets
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -164,6 +170,18 @@ load_dotenv()
 LAHZA_PUBLIC_KEY =os.getenv('LAHZA_PUBLIC_KEY') 
 LAHZA_SECRET_KEY = os.getenv('LAHZA_SECRET_KEY')
 LAHZA_API_URL = os.getenv('LAHZA_API_URL')
+
+
+ASGI_APPLICATION = 'backend.asgi.application'
+# Redis backend for channel layer
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 # Email configuration (example for Gmail)
 # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

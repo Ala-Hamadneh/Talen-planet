@@ -23,5 +23,6 @@ urlpatterns = [
     path('api/', include('apps.marketplace.urls')),
     path('api/orders/', include('apps.orders.urls')),
     path('api/payment/', include('apps.payment.urls')),
-
+    path('api/messages/', include('apps.communications.messages.urls')),
+    path('api/notifications/', include('apps.communications.notification.urls')),
 ]
