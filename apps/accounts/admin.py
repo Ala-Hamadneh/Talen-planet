@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import User, UserRoles
+from .models import User, UserRoles,EmailVerificationCode
 
 class CustomUserAdmin(UserAdmin):
     # Fields to display in user list
@@ -35,3 +35,4 @@ class UserRolesAdmin(admin.ModelAdmin):
 # Register models
 admin.site.register(User, CustomUserAdmin)
 admin.site.register(UserRoles, UserRolesAdmin)
+admin.site.register(EmailVerificationCode)

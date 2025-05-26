@@ -1,10 +1,22 @@
 from rest_framework import serializers
-from .models import User, UserRoles
+from .models import User, UserRoles,EmailVerificationCode
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from django.db import models
+from rest_framework_simplejwt.exceptions import AuthenticationFailed
 
-from django.core.exceptions import ValidationError
 from django.contrib.auth.password_validation import validate_password
+
+
+from .utils import generate_verification_code
+from django.core.mail import send_mail
+from django.conf import settings
+
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from rest_framework import serializers
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class UserRolesSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,6 +32,10 @@ class UserSerializer(serializers.ModelSerializer):
     role = UserRolesSerializer(read_only=True)
     role_id = serializers.IntegerField(write_only=True, required=True)
     password = serializers.CharField(write_only=True, required=False, validators=[validate_password])
+    average_rating = serializers.FloatField(read_only=True)
+    reviews_count = serializers.IntegerField(read_only=True)
+    profile_picture = serializers.ImageField(required=False, allow_null=True)
+
 
     class Meta:
         model = User
@@ -27,7 +43,8 @@ class UserSerializer(serializers.ModelSerializer):
             'id', 'username', 'email',
             'role', 'role_id', 'profile_picture',
             'bio', 'created_at', 'updated_at',
-            'is_staff', 'is_superuser', 'password'
+            'is_staff', 'is_superuser', 'password',
+            'average_rating', 'reviews_count','is_active','is_verified'
         ]
         read_only_fields = ['created_at', 'updated_at', 'is_staff', 'is_superuser']
 
@@ -82,8 +99,35 @@ class PasswordChangeSerializer(serializers.Serializer):
         validate_password(value)
         return value
 
+# class PasswordResetSerializer(serializers.Serializer):
+#     email = serializers.EmailField(required=True)
+
+
+
 class PasswordResetSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        try:
+            user = User.objects.get(email=value)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("User with this email does not exist.")
+        return value
+
+    def save(self, request):
+        email = self.validated_data['email']
+        user = User.objects.get(email=email)
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        
+        reset_link = f"https://preview--planet-freelance-hub.lovable.app/reset-password/{uid}/{token}/"
+        
+        user.email_user(
+            subject="Password Reset",
+            message=f"Click the link below to reset your password:\n{reset_link}",
+            from_email=None,
+        )
+
     
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -95,3 +139,66 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['email'] = user.email
         token['is_admin'] = user.is_superuser
         return token
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        if not self.user.is_verified:
+            raise AuthenticationFailed("Please verify your email first.")
+
+        return data
+    
+
+class EmailVerificationRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def create(self, validated_data):
+        code = generate_verification_code()
+
+        # Optional: remove old codes for this email
+        EmailVerificationCode.objects.filter(email=validated_data['email']).delete()
+
+        verification = EmailVerificationCode.objects.create(
+            email=validated_data['email'],
+            code=code
+        )
+
+        send_mail(
+            subject="Your Verification Code",
+            message=f"Your verification code is: {code}. It will expire in 2 minutes.",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[validated_data['email']],
+            fail_silently=False,
+        )
+
+        return verification  # ✅ Now DRF is satisfied
+
+    
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class EmailVerificationConfirmSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    code = serializers.CharField(max_length=6)
+
+    def validate(self, data):
+        try:
+            record = EmailVerificationCode.objects.filter(
+                email=data['email'],
+                code=data['code']
+            ).latest('created_at')
+        except EmailVerificationCode.DoesNotExist:
+            raise serializers.ValidationError("Invalid verification code.")
+
+        if record.is_expired():
+            raise serializers.ValidationError("Verification code has expired.")
+
+        # Mark user as verified
+        try:
+            user = User.objects.get(email=data['email'])
+            user.is_verified = True
+            user.save()
+        except User.DoesNotExist:
+            raise serializers.ValidationError("User with this email does not exist.")
+
+        return data

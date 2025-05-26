@@ -6,22 +6,24 @@ from .models import User
 from .serializers import (
     UserSerializer, 
     CustomTokenObtainPairSerializer,
-    UserRolesSerializer,
     PasswordChangeSerializer,
-    PasswordResetSerializer,
+    EmailVerificationRequestSerializer,
+    EmailVerificationConfirmSerializer,
+    PasswordResetSerializer
 
 )
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAdminUser
+from apps.marketplace.models import Gigs  
+from apps.orders.models import Order  
+from apps.payment.models import LahzaTransaction,WithdrawalRequest
+from django.db import models
 
 # Email 
 
-from django.core.mail import send_mail
-from django.conf import settings
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_encode
-from django.utils.http import urlsafe_base64_decode
-from django.utils.encoding import force_str
-from django.utils.encoding import force_bytes
-from django.urls import reverse
+from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework import status
 
 
 class RegisterView(generics.CreateAPIView):
@@ -91,60 +93,56 @@ class PasswordChangeView(generics.GenericAPIView):
         user.save()
         return Response({"status": "password changed"})
 
-# class PasswordResetView(generics.GenericAPIView):
-#     serializer_class = PasswordResetSerializer
-#     permission_classes = [permissions.AllowAny]
 
-#     def post(self, request):
-#         serializer = self.get_serializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-        
-#         email = serializer.data['email']
-#         try:
-#             user = User.objects.get(email=email)
-#         except User.DoesNotExist:
-#             return Response({"status": "If this email exists, we've sent a reset link"})
-            
-#         # Generate token
-#         token = default_token_generator.make_token(user)
-#         uid = urlsafe_base64_encode(force_bytes(user.pk))
-        
-#         # Build reset URL
-#         reset_url = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}/"
-        
-#         # Send email (configure your email backend in settings.py)
-#         send_mail(
-#             "Password Reset",
-#             f"Click to reset your password: {reset_url}",
-#             settings.DEFAULT_FROM_EMAIL,
-#             [email],
-#             fail_silently=False,
-#         )
-        
-#         return Response({"status": "If this email exists, we've sent a reset link"})
+class PasswordResetView(generics.GenericAPIView):
+    serializer_class = PasswordResetSerializer
+    permission_classes = [permissions.AllowAny]  
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(request=request)
+        return Response({"detail": "Password reset link sent."})
+
+class RequestEmailVerificationView(generics.CreateAPIView):
+    serializer_class = EmailVerificationRequestSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"message": "Verification code sent."}, status=201)
 
 
-# class PasswordResetConfirmView(generics.GenericAPIView):
-#     permission_classes = [permissions.AllowAny]
+class ConfirmEmailVerificationView(generics.CreateAPIView):
+    serializer_class = EmailVerificationConfirmSerializer
+    permission_classes = [permissions.AllowAny]
 
-#     def post(self, request, uidb64, token):
-#         try:
-#             uid = force_str(urlsafe_base64_decode(uidb64))
-#             user = User.objects.get(pk=uid)
-#         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-#             user = None
-        
-#         if user and default_token_generator.check_token(user, token):
-#             new_password = request.data.get('new_password')
-#             if new_password:
-#                 user.set_password(new_password)
-#                 user.save()
-#                 return Response({"status": "Password reset successful"})
-#             return Response(
-#                 {"new_password": "This field is required"},
-#                 status=status.HTTP_400_BAD_REQUEST
-#             )
-#         return Response(
-#             {"token": "Invalid token"},
-#             status=status.HTTP_400_BAD_REQUEST
-#         )
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        return Response({"message": "Email successfully verified."}, status=200)
+
+
+class AdminDashboardStatsView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        total_users = User.objects.count()
+        active_gigs = Gigs.objects.filter(is_active=True).count()
+        total_orders = Order.objects.count()
+        total_revenue = Order.objects.aggregate(total=models.Sum('platform_fee'))['total'] or 0
+
+        total_received = LahzaTransaction.objects.aggregate(total=models.Sum('amount'))['total'] or 0
+        total_withdrawn = WithdrawalRequest.objects.aggregate(total=models.Sum('amount'))['total'] or 0
+        held_money = total_received - total_withdrawn
+
+        return Response({
+            'total_users': total_users,
+            'active_gigs': active_gigs,
+            'total_orders': total_orders,
+            'revenue': total_revenue,
+            'held_money': held_money,
+        })
