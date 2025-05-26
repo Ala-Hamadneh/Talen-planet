@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Avg
 from django.conf import settings
 
 # Create your models here.
@@ -32,9 +33,16 @@ class Gigs(models.Model):
     delivery_time = models.PositiveIntegerField()  # in days
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    image = models.ImageField(upload_to='gig_images/', blank=True, null=True)
 
     class Meta:
         db_table = "gigs"
 
     def __str__(self):
         return self.title
+    @property
+    def average_rating(self):
+        return self.reviews.filter(is_active=True).aggregate(avg=Avg('rating'))['avg'] or 0
+    @property
+    def reviews_count(self):
+        return self.reviews.filter(is_active=True).count()

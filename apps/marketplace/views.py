@@ -1,4 +1,4 @@
-from rest_framework import generics, permissions 
+from rest_framework import generics, permissions, status 
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAdminUser
 from .models import Categories, Services, Gigs
@@ -8,6 +8,8 @@ from .serializers import (
     GigSerializer,
     GigCreateSerializer
 )
+from django.db.models import Avg
+from rest_framework.response import Response
 
 # Create your views here.
 
@@ -30,7 +32,20 @@ class GigListView(generics.ListAPIView):
     
     def get_queryset(self):
         service_id = self.kwargs['service_id']
-        return Gigs.objects.filter(service_id=service_id, is_active=True)
+        queryset = Gigs.objects.filter(service_id=service_id, is_active=True)
+
+        sort = self.request.query_params.get('sort')
+
+        if sort == 'highest_rating':
+            queryset = queryset.annotate(avg_rating=Avg('reviews__rating')).order_by('-avg_rating')
+        elif sort == 'lowest_price':
+            queryset = queryset.order_by('price')
+        elif sort == 'highest_price':
+            queryset = queryset.order_by('-price')
+        elif sort == 'most_recent':
+            queryset = queryset.order_by('-created_at')
+
+        return queryset
 
 class GigCreateView(generics.CreateAPIView):
     queryset = Gigs.objects.all()
@@ -48,12 +63,19 @@ class GigDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = GigSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     
-    def perform_update(self, serializer):
-        # Ensure only the owner can update
-        if serializer.instance.seller == self.request.user:
-            serializer.save()
-        else:
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', True)
+        instance = self.get_object()
+
+        if instance.seller != self.request.user:
             raise PermissionDenied("You don't have permission to edit this gig.")
+
+        serializer = self.get_serializer(instance, data=request.data, context={'request': request}, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=200)
+
     
     def perform_destroy(self, instance):
         # Soft delete instead of actual deletion
@@ -104,3 +126,38 @@ class AdminGigListView(generics.ListAPIView):
             'show_admin_fields': True,  # Flag to show sensitive fields to admin
             'request': self.request
         }
+    
+class AdminToggleGigStatusView(generics.UpdateAPIView):
+    """
+    Admin-only view to activate/deactivate a gig
+    """
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, pk):
+        try:
+            gig = Gigs.objects.get(pk=pk)
+        except Gigs.DoesNotExist:
+            return Response({'detail': 'Gig not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        gig.is_active = not gig.is_active
+        gig.save()
+        return Response({
+            'id': gig.id,
+            'title': gig.title,
+            'is_active': gig.is_active,
+            'message': f'Gig has been {"activated" if gig.is_active else "deactivated"} successfully.'
+        })
+
+
+# Top rated gigs
+class TopRatedGigListView(generics.ListAPIView):
+    serializer_class = GigSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        return (
+            Gigs.objects.filter(is_active=True)
+            .annotate(avg_rating=Avg('reviews__rating'))
+            .filter(avg_rating__gte=3.5)  
+            .order_by('avg_rating')
+        )
