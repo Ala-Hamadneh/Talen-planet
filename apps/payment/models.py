@@ -13,9 +13,14 @@ class LahzaTransaction(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20)
     created_at = models.DateTimeField(auto_now_add=True)
-
 class WithdrawalRequest(models.Model):
     seller = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    created_at = models.DateTimeField(auto_now_add=True)
+    # New fields (nullable for backward compatibility)
+    first_name = models.CharField(max_length=100, null=True, blank=True)
+    last_name = models.CharField(max_length=100, null=True, blank=True)
+    middle_name = models.CharField(max_length=100, null=True, blank=True)
+    iban = models.CharField(max_length=34, null=True, blank=True)
+
     is_processed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
