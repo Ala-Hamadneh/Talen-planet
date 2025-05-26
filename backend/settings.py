@@ -52,7 +52,7 @@ INSTALLED_APPS = [
     'apps.payment.apps.PaymentConfig',
     'apps.communications.messages.apps.MessagesAppConfig',
     'apps.communications.notification.apps.NotificationConfig',
-
+    'apps.reviews.apps.ReviewsConfig',
 
     # Channels for Web Sockets
     'channels',
@@ -95,10 +95,10 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'freelance_tsyd',
-        'USER': 'freelance_tsyd_user',
-        'PASSWORD': 'JRurtKkF1kFywKRzYhjA2SB6iXJnFbzt',
-        'HOST': 'dpg-d07qmpadbo4c73bqdb20-a.oregon-postgres.render.com',
+        'NAME': 'softwaregpdb',
+        'USER': 'postgres',
+        'PASSWORD': 'Alaa123456',
+        'HOST': 'localhost',
         'PORT': '5432'
     }
 }
@@ -139,6 +139,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -183,14 +186,10 @@ CHANNEL_LAYERS = {
     },
 }
 
-# Email configuration (example for Gmail)
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'your@gmail.com'
-# EMAIL_HOST_PASSWORD = 'your-app-password'
-# DEFAULT_FROM_EMAIL = 'your@gmail.com'
-
-# # Frontend URL for password reset links
-# FRONTEND_URL = 'http://yourfrontend.com'
+EMAIL_BACKEND = os.getenv('EMAIL_BACKEND')
+EMAIL_HOST = os.getenv('EMAIL_HOST')
+EMAIL_PORT = os.getenv('EMAIL_PORT')
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
