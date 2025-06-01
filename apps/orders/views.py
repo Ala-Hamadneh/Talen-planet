@@ -39,9 +39,7 @@ class OrderListView(generics.ListAPIView):
     """Endpoint to list all orders (with filters)"""
     serializer_class = OrderSerializer
     permission_classes = [permissions.IsAuthenticated]
-    queryset = Order.objects.filter(
-            is_active=True
-        ).select_related('gig', 'status', 'buyer', 'gig__seller')
+    queryset = Order.objects.select_related('gig', 'status', 'buyer', 'gig__seller').order_by('id')
     
     
  
@@ -98,18 +96,34 @@ class OrderDetailView(generics.RetrieveUpdateDestroyAPIView):
         else:
             raise PermissionDenied("You don't have permission to delete this order.")
 
-class BuyerOrderListView(generics.ListAPIView):
-    """Endpoint for a buyer to see all their orders"""
+class BuyerOrderActiveListView(generics.ListAPIView):
+    """Endpoint for a seller to see all orders for their gigs"""
     serializer_class = OrderSerializer
     permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
         return Order.objects.filter(
             buyer=self.request.user,
-            is_active=True
-        ).select_related('gig', 'status', 'gig__seller')
+            is_active=True,
+            status__in=[1, 2]
+        ).select_related('gig', 'status', 'buyer')
+    
 
-class SellerOrderListView(generics.ListAPIView):
+class BuyerOrderCompletedListView(generics.ListAPIView):
+    """Endpoint for a seller to see all orders for their gigs"""
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        return Order.objects.filter(
+            buyer=self.request.user,
+            status__in=[3, 4]
+
+        ).select_related('gig', 'status', 'buyer')
+
+
+
+class SellerOrderActiveListView(generics.ListAPIView):
     """Endpoint for a seller to see all orders for their gigs"""
     serializer_class = OrderSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -117,7 +131,21 @@ class SellerOrderListView(generics.ListAPIView):
     def get_queryset(self):
         return Order.objects.filter(
             gig__seller=self.request.user,
-            is_active=True
+            is_active=True,
+            status= 1
+        ).select_related('gig', 'status', 'buyer')
+    
+
+class SellerOrderCompletedListView(generics.ListAPIView):
+    """Endpoint for a seller to see all orders for their gigs"""
+    serializer_class = OrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        return Order.objects.filter(
+            gig__seller=self.request.user,
+            status__in=[2, 4]
+
         ).select_related('gig', 'status', 'buyer')
     
 
