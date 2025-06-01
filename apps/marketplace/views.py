@@ -1,4 +1,5 @@
-from rest_framework import generics, permissions, status 
+from rest_framework import generics, permissions, status
+from rest_framework.views import APIView
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAdminUser
 from .models import Categories, Services, Gigs
@@ -6,7 +7,8 @@ from .serializers import (
     CategorySerializer, 
     ServiceSerializer,
     GigSerializer,
-    GigCreateSerializer
+    GigCreateSerializer,
+    GigSaveToggleSerializer
 )
 from django.db.models import Avg
 from rest_framework.response import Response
@@ -14,7 +16,7 @@ from rest_framework.response import Response
 # Create your views here.
 
 class CategoryListView(generics.ListAPIView):
-    queryset = Categories.objects.all()
+    queryset = Categories.objects.all().order_by('id')
     serializer_class = CategorySerializer
     permission_classes = [permissions.AllowAny]
 
@@ -159,5 +161,35 @@ class TopRatedGigListView(generics.ListAPIView):
             Gigs.objects.filter(is_active=True)
             .annotate(avg_rating=Avg('reviews__rating'))
             .filter(avg_rating__gte=3.5)  
-            .order_by('avg_rating')
+            .order_by('-avg_rating')
         )
+
+class ToggleSavedGigView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = GigSaveToggleSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        gig_id = serializer.validated_data['gig_id']
+        gig = Gigs.objects.get(id=gig_id)
+
+        if request.user in gig.saved_by.all():
+            gig.saved_by.remove(request.user)
+            return Response({'message': 'Gig unsaved'}, status=status.HTTP_200_OK)
+        else:
+            gig.saved_by.add(request.user)
+            return Response({'message': 'Gig saved'}, status=status.HTTP_200_OK)
+        
+
+class SavedGigListView(generics.ListAPIView):
+    serializer_class = GigSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Gigs.objects.filter(saved_by=self.request.user, is_active=True)
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context

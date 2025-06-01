@@ -9,7 +9,9 @@ from .views import (
     MyFilteredGigsListView,
     AdminGigListView,
     TopRatedGigListView,
-    AdminToggleGigStatusView
+    AdminToggleGigStatusView,
+    ToggleSavedGigView,
+    SavedGigListView
 )
 
 urlpatterns = [
@@ -23,4 +25,6 @@ urlpatterns = [
     path('my-gigs/service/<int:service_id>/', MyFilteredGigsListView.as_view(), name='my-gigs-filtered'),
     path('admin/gigs/', AdminGigListView.as_view(), name='admin-gig-list'),
     path('admin/gigs/<int:pk>/toggle-status/', AdminToggleGigStatusView.as_view(), name='admin-toggle-gig-status'),
+    path('gigs/save-toggle/', ToggleSavedGigView.as_view(), name='gig-save-toggle'),
+    path('gigs/saved/', SavedGigListView.as_view(), name='saved-gigs'),
 ]

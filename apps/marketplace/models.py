@@ -34,7 +34,7 @@ class Gigs(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
     image = models.ImageField(upload_to='gig_images/', blank=True, null=True)
-
+    saved_by = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='saved_gigs', blank=True)
     class Meta:
         db_table = "gigs"
 
