@@ -135,9 +135,12 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         # Add custom claims
+        token['user_id'] = user.id
         token['username'] = user.username
         token['email'] = user.email
         token['is_admin'] = user.is_superuser
+        token['user_role'] = user.role.role_name if user.role else None  # ✅ Add this
+        token['is_staff'] = user.is_staff
         return token
     def validate(self, attrs):
         data = super().validate(attrs)
@@ -202,3 +205,12 @@ class EmailVerificationConfirmSerializer(serializers.Serializer):
             raise serializers.ValidationError("User with this email does not exist.")
 
         return data
+
+
+class PublicUserProfileSerializer(serializers.ModelSerializer):
+    average_rating = serializers.FloatField(read_only=True)
+    profile_picture = serializers.ImageField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'profile_picture', 'bio', 'average_rating']

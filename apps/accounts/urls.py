@@ -9,7 +9,8 @@ from .views import (
     PasswordResetView,
     RequestEmailVerificationView,
     ConfirmEmailVerificationView,
-    AdminDashboardStatsView
+    AdminDashboardStatsView,
+    PublicUserProfileView,
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -25,5 +26,5 @@ urlpatterns = [
     path("request-verification/", RequestEmailVerificationView.as_view(), name="request-verification"),
     path("confirm-verification/", ConfirmEmailVerificationView.as_view(), name="confirm-verification"),
     path('admin/dashboard-stats/', AdminDashboardStatsView.as_view(), name='admin-dashboard-stats'),
-
+    path('profile/<int:id>/', PublicUserProfileView.as_view(), name='public-user-profile'),
 ]

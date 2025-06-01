@@ -9,7 +9,8 @@ from .serializers import (
     PasswordChangeSerializer,
     EmailVerificationRequestSerializer,
     EmailVerificationConfirmSerializer,
-    PasswordResetSerializer
+    PasswordResetSerializer,
+    PublicUserProfileSerializer
 
 )
 from rest_framework.views import APIView
@@ -62,6 +63,18 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
                 {'detail': 'You are not allowed to edit other users details'},
             )
         return user
+    
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        # Redundant check for safety
+        if not (request.user.is_staff or request.user == instance):
+            raise PermissionDenied({'detail': 'You are not allowed to edit other users details'})
+
+        serializer = self.get_serializer(instance, data=request.data, context={'request': request}, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class LogoutView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -130,6 +143,10 @@ class AdminDashboardStatsView(APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
+        print("USER:", request.user)
+        print("IS AUTHENTICATED:", request.user.is_authenticated)
+        print("IS STAFF:", request.user.is_staff)
+
         total_users = User.objects.count()
         active_gigs = Gigs.objects.filter(is_active=True).count()
         total_orders = Order.objects.count()
@@ -146,3 +163,12 @@ class AdminDashboardStatsView(APIView):
             'revenue': total_revenue,
             'held_money': held_money,
         })
+
+
+
+
+class PublicUserProfileView(generics.RetrieveAPIView):
+    queryset = User.objects.all()
+    serializer_class = PublicUserProfileSerializer
+    permission_classes = [permissions.AllowAny]  # 👈 public access
+    lookup_field = 'id'  # or 'username' if you prefer
