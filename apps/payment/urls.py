@@ -8,6 +8,8 @@ from .views import (
     RequestWithdrawalView,
     AdminPayoutApprovalListView,
     AdminPayoutApproveView,
+    AdminWithdrawlRequest,
+    WithdrawalRequestStatusUpdateView,
     )
 
 urlpatterns = [
@@ -17,4 +19,6 @@ urlpatterns = [
     path('withdraw/', RequestWithdrawalView.as_view(), name='request-withdrawal'),
     path('admin/payouts/', AdminPayoutApprovalListView.as_view(), name='admin-payouts-list'),
     path('admin/payouts/<int:pk>/approve/', AdminPayoutApproveView.as_view(), name='admin-payout-approve'),
+    path('admin/withdrawals/',AdminWithdrawlRequest.as_view(),name='admin-withdrawal-list'),
+    path('admin/withdrawals/<int:id>/status/', WithdrawalRequestStatusUpdateView.as_view(), name='withdrawal-status-update'),
 ]

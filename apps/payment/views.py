@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from apps.orders.models import Order, OrderStatus
 from .models import LahzaTransaction, WithdrawalRequest
 from rest_framework import generics, permissions
-from .serializers import PayoutApprovalSerializer
+from .serializers import PayoutApprovalSerializer, WithdrawalRequestSerializer, WithdrawalRequestStatusSerializer
 from apps.communications.notification.utils import notify_user
 from rest_framework.permissions import AllowAny
 
@@ -33,8 +33,8 @@ class InitPaymentView(APIView):
                 "amount": str(int(order.gig.price * 100)),  
                 "currency": "ILS",
                 "email": request.user.email,
-                "callback_url": "https://f299-82-205-105-76.ngrok-free.app/payment-success/",
-                "webhook_url": "https://f299-82-205-105-76.ngrok-free.app/api/payment/webhook/"
+                "callback_url": "http://192.168.56.1:8080/orders",
+                "webhook_url": "https://292c-103-206-108-122.ngrok-free.app/api/payment/webhook/"
             }
 
             headers = {
@@ -189,3 +189,21 @@ class AdminPayoutApproveView(generics.UpdateAPIView):
     serializer_class = PayoutApprovalSerializer
     permission_classes = [permissions.IsAdminUser]
     queryset = Order.objects.all()
+
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        instance.payout_sent = True
+        instance.save()
+class AdminWithdrawlRequest(generics.ListAPIView):
+    serializer_class = WithdrawalRequestSerializer
+    permission_classes = [permissions.IsAdminUser]
+    queryset = WithdrawalRequest.objects.all()
+
+class WithdrawalRequestStatusUpdateView(generics.UpdateAPIView):
+    queryset = WithdrawalRequest.objects.all()
+    serializer_class = WithdrawalRequestStatusSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = 'id'
+
+    def perform_update(self, serializer):
+        serializer.save(is_processed=serializer.validated_data.get('is_processed', False))
