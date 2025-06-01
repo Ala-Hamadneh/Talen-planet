@@ -15,7 +15,7 @@ class RoomListCreateView(APIView):
 
     def get(self, request):
         rooms = Room.objects.filter(user1=request.user) | Room.objects.filter(user2=request.user)
-        serializer = RoomSerializer(rooms, many=True)
+        serializer = RoomSerializer(rooms, many=True, context={'request': request})
         return Response(serializer.data)
 
     def post(self, request):

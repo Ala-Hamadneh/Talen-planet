@@ -12,7 +12,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.room_id = self.scope['url_route']['kwargs']['room_id']
         self.room_group_name = f"chat_{self.room_id}"
 
-        # Join room group
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
@@ -28,19 +27,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-        message = data['message']
+        message_text = data['message']
         sender_id = self.scope['user'].id
 
-        # Save message to DB
-        await self.save_message(sender_id, self.room_id, message)
+        msg = await self.save_message(sender_id, self.room_id, message_text)
 
-        # Broadcast message to room
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'chat_message',
-                'message': message,
+                'message': msg.content,
                 'sender_id': sender_id,
+                'timestamp': msg.timestamp.isoformat(),
+                'message_id': msg.id,
+                'room': self.room_id,
+                'is_read': msg.is_read,
             }
         )
 
@@ -48,6 +49,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'message': event['message'],
             'sender_id': event['sender_id'],
+            'timestamp': event['timestamp'],
+            'message_id': event['message_id'],
+            'room': event['room'],
+            'is_read': event['is_read'],
         }))
 
     @database_sync_to_async
@@ -63,8 +68,5 @@ class ChatConsumer(AsyncWebsocketConsumer):
             body=f"You received a message from {sender.username}",
             notification_type="message"
         )
-        print(f"Notifying {receiver.username}")
-
 
         return message
-
