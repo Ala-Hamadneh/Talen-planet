@@ -132,7 +132,7 @@ class SellerOrderActiveListView(generics.ListAPIView):
         return Order.objects.filter(
             gig__seller=self.request.user,
             is_active=True,
-            status= 1
+            status__in=[1, 2]
         ).select_related('gig', 'status', 'buyer')
     
 
@@ -144,7 +144,7 @@ class SellerOrderCompletedListView(generics.ListAPIView):
     def get_queryset(self):
         return Order.objects.filter(
             gig__seller=self.request.user,
-            status__in=[2, 4]
+            status__in=[3, 4]
 
         ).select_related('gig', 'status', 'buyer')
     
