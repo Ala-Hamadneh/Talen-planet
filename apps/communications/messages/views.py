@@ -5,7 +5,8 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .permissions import IsRoomParticipant
-
+from django.db.models import Max, F
+from django.db.models.functions import Coalesce
 # Create your views here.
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -15,6 +16,9 @@ class RoomListCreateView(APIView):
 
     def get(self, request):
         rooms = Room.objects.filter(user1=request.user) | Room.objects.filter(user2=request.user)
+        rooms = rooms.annotate(
+        sort_time=Coalesce(Max('messages__timestamp'), F('created_at'))
+        ).order_by('-sort_time')
         serializer = RoomSerializer(rooms, many=True, context={'request': request})
         return Response(serializer.data)
 

@@ -40,5 +40,7 @@ class RoomSerializer(serializers.ModelSerializer):
         return UserSummarySerializer(other_user).data
     
     def get_unread_count(self, obj):
-        request = self.context.get('request')
+        request = self.context.get("request", None)
+        if request is None:
+            return 0
         return obj.messages.filter(is_read=False).exclude(sender=request.user).count()
