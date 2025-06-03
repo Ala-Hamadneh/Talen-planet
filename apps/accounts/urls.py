@@ -11,6 +11,7 @@ from .views import (
     ConfirmEmailVerificationView,
     AdminDashboardStatsView,
     PublicUserProfileView,
+    SellerEarningsView,
 )
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -27,4 +28,5 @@ urlpatterns = [
     path("confirm-verification/", ConfirmEmailVerificationView.as_view(), name="confirm-verification"),
     path('admin/dashboard-stats/', AdminDashboardStatsView.as_view(), name='admin-dashboard-stats'),
     path('profile/<int:id>/', PublicUserProfileView.as_view(), name='public-user-profile'),
+    path("seller/earnings/", SellerEarningsView.as_view(), name="seller-earnings"),
 ]

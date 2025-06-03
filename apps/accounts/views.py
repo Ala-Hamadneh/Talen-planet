@@ -2,6 +2,10 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from django.db import models
+
 from .models import User
 from .serializers import (
     UserSerializer, 
@@ -11,20 +15,11 @@ from .serializers import (
     EmailVerificationConfirmSerializer,
     PasswordResetSerializer,
     PublicUserProfileSerializer
-
 )
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAdminUser
+
 from apps.marketplace.models import Gigs  
-from apps.orders.models import Order  
-from apps.payment.models import LahzaTransaction,WithdrawalRequest
-from django.db import models
-
-# Email 
-
-from rest_framework import generics
-from rest_framework.response import Response
-from rest_framework import status
+from apps.orders.models import Order, OrderStatus  
+from apps.payment.models import LahzaTransaction, WithdrawalRequest
 
 
 class RegisterView(generics.CreateAPIView):
@@ -172,3 +167,36 @@ class PublicUserProfileView(generics.RetrieveAPIView):
     serializer_class = PublicUserProfileSerializer
     permission_classes = [permissions.AllowAny]  # 👈 public access
     lookup_field = 'id'  # or 'username' if you prefer
+
+
+class SellerEarningsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        status_in_progress = OrderStatus.objects.get(name="In Progress").id
+        status_delivered = OrderStatus.objects.get(name="Delivered").id
+        status_completed = OrderStatus.objects.get(name="Completed").id
+        valid_statuses = [status_in_progress, status_delivered, status_completed]
+
+        seller_gigs = Gigs.objects.filter(seller=user)
+        orders = Order.objects.filter(gig__in=seller_gigs, status__in=valid_statuses).select_related('gig')
+        
+        total_earnings = sum(order.gig.price for order in orders)
+
+        held_money = sum(
+            order.gig.price for order in orders
+            if order.status_id in [status_in_progress, status_delivered] and order.is_paid 
+        )
+
+        available_money = sum(
+            order.gig.price for order in orders
+            if order.status_id == status_completed and order.is_paid and not order.payout_sent
+        )
+
+        return Response({
+            "total_earnings": total_earnings,
+            "held_money": held_money,
+            "available_money": available_money,
+        }, status=200)
