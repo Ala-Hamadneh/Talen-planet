@@ -12,7 +12,9 @@ class OrderStatusSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     order_status = serializers.CharField(source='status.name', read_only=True)
     buyer_username = serializers.CharField(source='buyer.username', read_only=True)
+    buyer_id = serializers.CharField(source='buyer.id', read_only=True)
     seller_username = serializers.CharField(source='gig.seller.username', read_only=True)
+    seller_id = serializers.CharField(source='gig.seller.id', read_only=True)
     gig_title = serializers.CharField(source='gig.title', read_only=True)
     gig_description = serializers.CharField(source='gig.description', read_only=True)
     gig_price = serializers.CharField(source='gig.price', read_only=True)
@@ -26,7 +28,7 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = [
-            'id', 'buyer_username', 'seller_username', 'profile_picture',
+            'id', 'buyer_username', 'buyer_id', 'seller_username', 'seller_id', 'profile_picture',
             'gig', 'gig_title', 'gig_description', 'gig_price', 'delivery_time',
             'order_status', 'requirements',
             'created_at', 'updated_at', 'delivery_date', 'is_active',
