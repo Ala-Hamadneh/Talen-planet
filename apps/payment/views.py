@@ -34,7 +34,7 @@ class InitPaymentView(APIView):
                 "amount": str(int(order.gig.price * 100)),  
                 "currency": "ILS",
                 "email": request.user.email,
-                "callback_url": "http://192.168.56.1:8080/orders",
+                "callback_url": "http://192.168.56.1:8080/orders?payment=success",
                 "webhook_url": "https://292c-103-206-108-122.ngrok-free.app/api/payment/webhook/"
             }
 
